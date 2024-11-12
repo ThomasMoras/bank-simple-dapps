@@ -6,28 +6,32 @@ error Bank__NotEnoughEthersOnTheSC();
 error Bank__WithdrawFailed();
 
 contract Bank {
-    
-    mapping(address => uint256) balances;
+    mapping(address => uint256) public balances;
+
+    event EtherDeposited(address indexed depositor, uint256 amount);
+    event EtherWithdrawn(address indexed withdrawer, uint256 amount);
 
     function sendEthers() external payable {
-        if(msg.value < 1 wei) {
+        if (msg.value < 1 wei) {
             revert Bank__NotEnoughFundsProvided();
         }
         balances[msg.sender] += msg.value;
+        emit EtherDeposited(msg.sender, msg.value);
     }
 
     function withdraw(uint256 _amount) external {
-        if(_amount > balances[msg.sender]) {
+        if (_amount > balances[msg.sender]) {
             revert Bank__NotEnoughEthersOnTheSC();
         }
         balances[msg.sender] -= _amount;
-        (bool received,) = msg.sender.call{ value: _amount }('');
-        if(!received) {
+        (bool received, ) = msg.sender.call{ value: _amount }("");
+        if (!received) {
             revert Bank__WithdrawFailed();
         }
+        emit EtherWithdrawn(msg.sender, _amount);
     }
 
-    function getBalanceOfUser(address _user) external view returns(uint256) {
+    function getBalanceOfUser(address _user) external view returns (uint256) {
         return balances[_user];
     }
 }
